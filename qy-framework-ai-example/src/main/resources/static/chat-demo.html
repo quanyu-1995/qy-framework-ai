@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>QY-FRAMEWORK_AI演示</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+        .output {
+            border: 1px solid #ccc; 
+            padding: 15px; 
+            min-height: 150px; 
+            margin-top: 20px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .input-group { display: flex; gap: 10px; }
+        input { flex: 1; padding: 8px; }
+        button { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="input-group">
+        <input type="text" id="userInput" placeholder="输入您的问题..." />
+        <button onclick="connect()">发送</button>
+    </div>
+    <div id="reasoning_output" class="output"></div>
+    <div id="output" class="output"></div>
+
+    <script>
+        let eventSource;
+        let buffer = '';
+        let charIndex = 0;
+        let timer;
+
+        function connect() {
+            const userInput = document.getElementById('userInput').value;
+            const reasoningOutputDiv = document.getElementById('reasoning_output');
+            const outputDiv = document.getElementById('output');
+            reasoningOutputDiv.innerHTML = '';
+            outputDiv.innerHTML = '';
+
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            // 初始化SSE连接
+            eventSource = new EventSource(`http://localhost:8080/chatFlux?userInput=${encodeURIComponent(userInput)}`);
+
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                reasoningOutputDiv.innerHTML += data.reasoningContent || '';
+                outputDiv.innerHTML += data.content || '';
+            };
+
+            eventSource.onerror = function() {
+                console.error('连接错误');
+                eventSource.close();
+            };
+        }
+
+        // 支持回车键发送
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') connectSSE();
+        });
+    </script>
+</body>
+</html>
