@@ -1,4 +1,4 @@
-package org.quanyu;
+package org.quanyu.ai.mcp.server;
 
 import java.lang.annotation.*;
 
@@ -7,4 +7,5 @@ import java.lang.annotation.*;
 @Documented
 public @interface McpParameter {
     String desc() default "";
+    boolean required() default true;
 }

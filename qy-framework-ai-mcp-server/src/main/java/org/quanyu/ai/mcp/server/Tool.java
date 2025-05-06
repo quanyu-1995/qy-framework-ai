@@ -1,4 +1,4 @@
-package org.quanyu;
+package org.quanyu.ai.mcp.server;
 
 import java.lang.annotation.*;
 
