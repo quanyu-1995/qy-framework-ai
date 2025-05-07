@@ -4,10 +4,6 @@ package org.quanyu.ai.mcp.server;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.victools.jsonschema.generator.*;
-import com.github.victools.jsonschema.generator.Module;
-import com.github.victools.jsonschema.module.jackson.JacksonModule;
-import com.github.victools.jsonschema.module.jackson.JacksonOption;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
@@ -31,15 +27,6 @@ public class McpServerRegistrar {
     @Resource
     private WebFluxSseServerTransport transport;
 
-    private static final SchemaGenerator SUBTYPE_SCHEMA_GENERATOR;
-
-    static {
-        Module jacksonModule = new JacksonModule(JacksonOption.RESPECT_JSONPROPERTY_REQUIRED);
-        SchemaGeneratorConfigBuilder schemaGeneratorConfigBuilder = (new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON)).with(jacksonModule).with(Option.EXTRA_OPEN_API_FORMAT_VALUES, new Option[0]).with(Option.PLAIN_DEFINITION_KEYS, new Option[0]);
-        SchemaGeneratorConfig subtypeSchemaGeneratorConfig = schemaGeneratorConfigBuilder.without(Option.SCHEMA_VERSION_INDICATOR, new Option[0]).build();
-        SUBTYPE_SCHEMA_GENERATOR = new SchemaGenerator(subtypeSchemaGeneratorConfig);
-    }
-
     @PostConstruct
     public void registerMcpServers() {
         // 创建具有自定义配置的服务器
@@ -55,34 +42,25 @@ public class McpServerRegistrar {
         // 查找方法级别的Tool注解
         String[] beanNames = applicationContext.getBeanDefinitionNames();
         for (String beanName : beanNames) {
+            // 跳过自身 Bean，避免触发循环依赖
+            if (beanName.equals("mcpServerRegistrar")) {
+                continue;
+            }
             Object bean = applicationContext.getBean(beanName);
             for (Method method : bean.getClass().getMethods()) {
                 if (method.isAnnotationPresent(Tool.class)) {
                     Tool toolAnnotation = method.getAnnotation(Tool.class);
                     // 处理参数
                     ObjectNode schema = new ObjectNode(JsonNodeFactory.instance);
-                    schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
                     schema.put("type","object");
-                    schema.put("additionalProperties", false);
-                    ObjectNode properties = schema.putObject("properties");
-                    ArrayNode required = properties.putArray("required");
-
+                    ArrayNode required = schema.putArray("required");
                     Parameter[] parameters = method.getParameters();
                     for (int i = 0; i < parameters.length; i++) {
-                        if(parameters[i].isAnnotationPresent(McpParameter.class)){
-                            String name = parameters[i].getName();
-                            Type parameterType = method.getGenericParameterTypes()[i];
-                            McpParameter mcpParameter = parameters[i].getAnnotation(McpParameter.class);
-                            ObjectNode parameterNode = SUBTYPE_SCHEMA_GENERATOR.generateSchema(parameterType);
-                            parameterNode.put("description", mcpParameter.desc());
-                            properties.set(name, parameterNode);
-                            if(mcpParameter.required()){
-                                required.add(name);
-                            }
-                        }
+                        Parameter parameter = parameters[i];
+                        Type parameterType = method.getGenericParameterTypes()[i];
+                        this.putProperties(schema, parameter, parameterType);
+                        required.add(parameter.getName());
                     }
-                    // 注册方法级别的服务
-
                     McpServerFeatures.SyncToolRegistration syncToolRegistration = buildSyncToolRegistration(method.getName(), toolAnnotation.desc(), schema.toPrettyString());
                     syncServer.addTool(syncToolRegistration);
                 }
@@ -94,6 +72,23 @@ public class McpServerRegistrar {
                 .logger("custom-logger")
                 .data("服务器已初始化")
                 .build());
+
+//        syncServer.close();
+    }
+
+    private void putProperties(ObjectNode schema, Parameter parameter, Type parameterType){
+        // 处理参数
+        String typeName = parameterType.getTypeName();
+        ObjectNode properties = (ObjectNode)schema.get("properties");
+        if(properties==null){
+            properties = schema.putObject("properties");
+        }
+        ObjectNode paramSchema = properties.putObject(parameter.getName());
+        paramSchema.put("type", typeName);
+        if(parameter.isAnnotationPresent(McpParameter.class)){
+            McpParameter mcpParameter = parameter.getAnnotation(McpParameter.class);
+            paramSchema.put("description", mcpParameter.desc());
+        }
     }
 
     private McpServerFeatures.SyncToolRegistration buildSyncToolRegistration(String toolName, String toolDesc, String schema){
