@@ -14,8 +14,8 @@ import org.springframework.web.reactive.function.server.RouterFunction;
 @Configuration
 class McpConfig {
     @Bean
-    WebFluxSseServerTransport webFluxSseServerTransport(ObjectMapper mapper) {
-        return new WebFluxSseServerTransport(mapper, "/mcp/message");
+    WebFluxSseServerTransport webFluxSseServerTransport() {
+        return new WebFluxSseServerTransport(new ObjectMapper(), "/mcp/message");
     }
 
     @Bean
