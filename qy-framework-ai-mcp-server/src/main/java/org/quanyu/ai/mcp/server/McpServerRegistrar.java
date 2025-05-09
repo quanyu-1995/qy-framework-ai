@@ -1,13 +1,14 @@
 
 package org.quanyu.ai.mcp.server;
 
+import com.alibaba.fastjson.JSON;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpServerFeatures;
 import io.modelcontextprotocol.server.McpSyncServer;
-import io.modelcontextprotocol.server.transport.WebFluxSseServerTransport;
+import io.modelcontextprotocol.server.transport.WebFluxSseServerTransportProvider;
 import io.modelcontextprotocol.spec.McpSchema;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
+import java.util.Collections;
 
 @Component
 public class McpServerRegistrar {
@@ -25,7 +26,7 @@ public class McpServerRegistrar {
     @Resource
     private ApplicationContext applicationContext;
     @Resource
-    private WebFluxSseServerTransport transport;
+    private WebFluxSseServerTransportProvider transport;
 
     @PostConstruct
     public void registerMcpServers() {
@@ -42,7 +43,7 @@ public class McpServerRegistrar {
         // 查找方法级别的Tool注解
         String[] beanNames = applicationContext.getBeanDefinitionNames();
         for (String beanName : beanNames) {
-            // 跳过自身 Bean，避免触发循环依赖
+            // 跳过自身 Bean，避免循环依赖
             if (beanName.equals("mcpServerRegistrar")) {
                 continue;
             }
@@ -61,8 +62,8 @@ public class McpServerRegistrar {
                         this.putProperties(schema, parameter, parameterType);
                         required.add(parameter.getName());
                     }
-                    McpServerFeatures.SyncToolRegistration syncToolRegistration = buildSyncToolRegistration(method.getName(), toolAnnotation.desc(), schema.toPrettyString());
-                    syncServer.addTool(syncToolRegistration);
+                    McpServerFeatures.SyncToolSpecification syncToolSpecification = buildSyncToolSpecification(bean, method, toolAnnotation.desc(), schema.toPrettyString());
+                    syncServer.addTool(syncToolSpecification);
                 }
             }
         }
@@ -72,13 +73,11 @@ public class McpServerRegistrar {
                 .logger("custom-logger")
                 .data("服务器已初始化")
                 .build());
-
-//        syncServer.close();
     }
 
     private void putProperties(ObjectNode schema, Parameter parameter, Type parameterType){
         // 处理参数
-        String typeName = parameterType.getTypeName();
+        String typeName = ((Class<?>)parameterType).getSimpleName();
         ObjectNode properties = (ObjectNode)schema.get("properties");
         if(properties==null){
             properties = schema.putObject("properties");
@@ -91,17 +90,31 @@ public class McpServerRegistrar {
         }
     }
 
-    private McpServerFeatures.SyncToolRegistration buildSyncToolRegistration(String toolName, String toolDesc, String schema){
+    private McpServerFeatures.SyncToolSpecification buildSyncToolSpecification(Object instance, Method method, String toolDesc, String schema){
         // 定义Tool
         McpSchema.Tool tool = new McpSchema.Tool(
-                toolName,
+                method.getName(),
                 toolDesc,
                 schema
         );
         // 定义同步工具
-        return new McpServerFeatures.SyncToolRegistration(
+        return new McpServerFeatures.SyncToolSpecification(
                 tool,
-                request -> new McpSchema.CallToolResult(new ArrayList<>(), false)
+                (exchange, arguments) -> {
+                    //执行函数
+                    try {
+                        Parameter[] parameters = method.getParameters();
+                        Object[] argArr = new Object[parameters.length];
+                        for (int i = 0; i < parameters.length; i++) {
+                            argArr[i] = arguments.get(parameters[i].getName());
+                        }
+                        Object obj = method.invoke(instance, argArr);
+                        String str = obj==null?"": JSON.toJSONString(obj);
+                        return new McpSchema.CallToolResult(Collections.singletonList(new McpSchema.TextContent(str)), false);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
         );
     }
 }

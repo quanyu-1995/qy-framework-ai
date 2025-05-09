@@ -2,7 +2,7 @@ package org.quanyu.ai.mcp.server;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.server.transport.WebFluxSseServerTransport;
+import io.modelcontextprotocol.server.transport.WebFluxSseServerTransportProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
@@ -14,12 +14,12 @@ import org.springframework.web.reactive.function.server.RouterFunction;
 @Configuration
 class McpConfig {
     @Bean
-    WebFluxSseServerTransport webFluxSseServerTransport() {
-        return new WebFluxSseServerTransport(new ObjectMapper(), "/mcp/message");
+    WebFluxSseServerTransportProvider webFluxSseServerTransportProvider() {
+        return new WebFluxSseServerTransportProvider(new ObjectMapper(), "/mcp/message");
     }
 
     @Bean
-    RouterFunction<?> mcpRouterFunction(WebFluxSseServerTransport transport) {
-        return transport.getRouterFunction();
+    RouterFunction<?> mcpRouterFunction(WebFluxSseServerTransportProvider provider) {
+        return provider.getRouterFunction();
     }
 }
