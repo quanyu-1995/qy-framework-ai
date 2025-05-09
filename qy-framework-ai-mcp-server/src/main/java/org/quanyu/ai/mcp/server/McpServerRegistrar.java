@@ -17,8 +17,9 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Collections;
+import java.util.*;
 
 @Component
 public class McpServerRegistrar {
@@ -56,10 +57,8 @@ public class McpServerRegistrar {
                     schema.put("type","object");
                     ArrayNode required = schema.putArray("required");
                     Parameter[] parameters = method.getParameters();
-                    for (int i = 0; i < parameters.length; i++) {
-                        Parameter parameter = parameters[i];
-                        Type parameterType = method.getGenericParameterTypes()[i];
-                        this.putProperties(schema, parameter, parameterType);
+                    for (Parameter parameter : parameters) {
+                        this.putProperties(schema, parameter);
                         required.add(parameter.getName());
                     }
                     McpServerFeatures.SyncToolSpecification syncToolSpecification = buildSyncToolSpecification(bean, method, toolAnnotation.desc(), schema.toPrettyString());
@@ -75,9 +74,10 @@ public class McpServerRegistrar {
                 .build());
     }
 
-    private void putProperties(ObjectNode schema, Parameter parameter, Type parameterType){
+    private void putProperties(ObjectNode schema, Parameter parameter){
         // 处理参数
-        String typeName = ((Class<?>)parameterType).getSimpleName();
+        String typeName = jsonTypeMapper(parameter);
+
         ObjectNode properties = (ObjectNode)schema.get("properties");
         if(properties==null){
             properties = schema.putObject("properties");
@@ -88,6 +88,42 @@ public class McpServerRegistrar {
             McpParameter mcpParameter = parameter.getAnnotation(McpParameter.class);
             paramSchema.put("description", mcpParameter.desc());
         }
+    }
+
+    private String jsonTypeMapper(Parameter parameter){
+        Class<?> paramType = parameter.getType();
+        Type genericType = parameter.getParameterizedType();
+
+        // 基础类型判断
+        if (paramType.isPrimitive()) {
+            if (paramType == boolean.class) return "boolean";
+            else if (paramType == char.class) return "string";
+            else return "number";
+        } else if (Number.class.isAssignableFrom(paramType)) {
+            return "number";
+        } else if (paramType == String.class) {
+            return "string";
+        } else if (paramType == Boolean.class) {
+            return "boolean";
+        }
+
+        // 复合类型判断
+        if (paramType.isArray() || Collection.class.isAssignableFrom(paramType)) {
+            return "array";
+        } else if (Map.class.isAssignableFrom(paramType)) {
+            return "object";
+        }
+
+        // 泛型类型处理
+        if (genericType instanceof ParameterizedType) {
+            Type rawType = ((ParameterizedType) genericType).getRawType();
+            if (rawType == List.class || rawType == Set.class) {
+                return "array";
+            }
+        }
+
+        // 默认视为对象
+        return "object";
     }
 
     private McpServerFeatures.SyncToolSpecification buildSyncToolSpecification(Object instance, Method method, String toolDesc, String schema){

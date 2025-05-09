@@ -1,8 +1,8 @@
 package org.quanyu.test;
 
 
-import org.quanyu.ai.client.ChatClient;
-import org.quanyu.ai.common.model.QyAIResponse;
+import org.quanyu.ai.chat.client.ChatClient;
+import org.quanyu.ai.chat.model.QyAIResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;

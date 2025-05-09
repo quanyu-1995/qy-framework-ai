@@ -21,7 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>org.quanyu</groupId>
-            <artifactId>qy-framework-ai-helper</artifactId>
+            <artifactId>qy-framework-ai-mcp-client</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
