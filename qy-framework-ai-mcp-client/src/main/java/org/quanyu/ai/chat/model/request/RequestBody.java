@@ -15,7 +15,7 @@ import java.util.List;
 public class RequestBody {
 
     private String model;
-    private List<Message> messages;
+    private List<Object> messages;
     private List<Tool> tools;
     private boolean stream = false;
 
@@ -24,11 +24,11 @@ public class RequestBody {
         return this;
     }
 
-    public RequestBody addMessage(String role, String content){
+    public RequestBody addMessage(Object message){
         if (this.messages==null){
             this.messages = new ArrayList<>();
         }
-        this.messages.add(new Message(role, content));
+        this.messages.add(message);
         return this;
     }
 

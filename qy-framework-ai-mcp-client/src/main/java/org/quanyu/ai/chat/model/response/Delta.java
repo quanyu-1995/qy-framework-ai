@@ -1,4 +1,4 @@
-package org.quanyu.ai.chat.model.openai.response;
+package org.quanyu.ai.chat.model.response;
 
 
 import lombok.Data;

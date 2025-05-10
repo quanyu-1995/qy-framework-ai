@@ -43,9 +43,9 @@ public class QyMcpClient {
         return getMcpSyncClient().listTools();
     }
 
-    private String callTool(McpSchema.Tool tool, Map<String, Object> arguments){
+    public String callTool(String toolName, Map<String, Object> arguments){
         McpSchema.CallToolResult result = getMcpSyncClient().callTool(
-                new McpSchema.CallToolRequest(tool.name(), arguments)
+                new McpSchema.CallToolRequest(toolName, arguments)
         );
         return ((McpSchema.TextContent)result.content().get(0)).text();
     }

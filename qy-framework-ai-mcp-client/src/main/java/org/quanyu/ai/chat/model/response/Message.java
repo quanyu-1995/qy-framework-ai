@@ -1,7 +1,9 @@
-package org.quanyu.ai.chat.model.ollama.response;
+package org.quanyu.ai.chat.model.response;
 
 
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * @author quanyu
@@ -11,4 +13,6 @@ import lombok.Data;
 public class Message {
     public String role;
     public String content;
+    public String reasoning_content;
+    public List<ToolCall> tool_calls;
 }

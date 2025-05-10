@@ -1,10 +1,8 @@
-package org.quanyu.ai.chat.model.openai.response;
+package org.quanyu.ai.chat.model.response;
 
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.quanyu.ai.chat.model.ModelResponse;
-import org.quanyu.ai.chat.model.QyAIResponse;
 
 import java.util.List;
 
@@ -39,6 +37,16 @@ public class OpenAIResponseBody extends ModelResponse {
             qyAIResponse.setReasoningContent(delta.getReasoning_content());
         }
         return qyAIResponse;
+    }
+
+    @Override
+    public List<ToolCall> toolCalls() {
+        return this.getChoices().get(0).getMessage().getTool_calls();
+    }
+
+    @Override
+    public Object messages() {
+        return this.getChoices().get(0).getMessage();
     }
 
 }

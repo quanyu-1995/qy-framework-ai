@@ -1,8 +1,9 @@
 package org.quanyu.ai.chat.client;
 
 
-import org.quanyu.ai.chat.model.QyAIResponse;
-import org.quanyu.ai.chat.model.ollama.response.OllamaResponseBody;
+import org.quanyu.ai.chat.CacheStrategy;
+import org.quanyu.ai.chat.model.response.QyAIResponse;
+import org.quanyu.ai.chat.model.response.OllamaResponseBody;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -16,14 +17,14 @@ import reactor.core.publisher.Flux;
 @ConditionalOnProperty(name = "quanyu.ai.strategy", havingValue = "ollama")
 public class OllamaChatClient extends ChatClient {
 
-
-    public QyAIResponse chat(String userInput){
-        return this.chat(OllamaResponseBody.class, userInput);
+    @Override
+    public QyAIResponse chat(CacheStrategy cacheStrategy, String sessionId, String userInput){
+        return this.chat(OllamaResponseBody.class, cacheStrategy, sessionId, userInput);
     }
 
     @Override
-    public Flux<QyAIResponse> chatFlux(String userInput) {
-        return this.chatFlux(OllamaResponseBody.class, userInput);
+    public Flux<QyAIResponse> chatFlux(CacheStrategy cacheStrategy, String sessionId, String userInput) {
+        return this.chatFlux(OllamaResponseBody.class, cacheStrategy, sessionId, userInput);
     }
 
 }

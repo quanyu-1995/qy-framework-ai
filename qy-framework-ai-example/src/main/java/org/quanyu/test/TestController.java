@@ -2,7 +2,7 @@ package org.quanyu.test;
 
 
 import org.quanyu.ai.chat.client.ChatClient;
-import org.quanyu.ai.chat.model.QyAIResponse;
+import org.quanyu.ai.chat.model.response.QyAIResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,13 +21,13 @@ public class TestController {
     ChatClient chatClient;
 
     @GetMapping("chat")
-    public QyAIResponse chat(@RequestParam(value = "userInput") String userInput){
-        return chatClient.chat(userInput);
+    public QyAIResponse chat(@RequestParam(value = "sessionId", required = false) String sessionId, @RequestParam(value = "userInput") String userInput){
+        return chatClient.chat(sessionId, userInput);
     }
 
     @GetMapping(value = "chatFlux", produces= MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<QyAIResponse> chatFlux(@RequestParam(value = "userInput") String userInput){
-        return chatClient.chatFlux(userInput);
+    public Flux<QyAIResponse> chatFlux(@RequestParam(value = "sessionId", required = false) String sessionId, @RequestParam(value = "userInput") String userInput){
+        return chatClient.chatFlux(sessionId, userInput);
     }
 
 }

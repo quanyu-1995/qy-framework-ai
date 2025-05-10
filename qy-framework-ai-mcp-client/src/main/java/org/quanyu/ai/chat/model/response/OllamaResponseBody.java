@@ -1,10 +1,10 @@
-package org.quanyu.ai.chat.model.ollama.response;
+package org.quanyu.ai.chat.model.response;
 
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.quanyu.ai.chat.model.QyAIResponse;
-import org.quanyu.ai.chat.model.ModelResponse;
+
+import java.util.List;
 
 /**
  * @author quanyu
@@ -24,5 +24,15 @@ public class OllamaResponseBody extends ModelResponse {
             qyAIResponse.setContent(message.getContent());
         }
         return qyAIResponse;
+    }
+
+    @Override
+    public List<ToolCall> toolCalls() {
+        return this.getMessage().getTool_calls();
+    }
+
+    @Override
+    public Object messages() {
+        return this.getMessage();
     }
 }

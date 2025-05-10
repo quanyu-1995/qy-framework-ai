@@ -1,4 +1,4 @@
-package org.quanyu.ai.chat.model;
+package org.quanyu.ai.chat.model.response;
 
 
 import lombok.Data;
@@ -17,5 +17,4 @@ public class QyAIResponse {
     private String reasoningContent;
     private String content;
     private Integer totalTokens;
-
 }
