@@ -9,7 +9,6 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
-        <module>qy-framework-ai-helper</module>
         <module>qy-framework-ai-mcp-server</module>
         <module>qy-framework-ai-mcp-client</module>
         <module>qy-framework-ai-example</module>
