@@ -3,11 +3,9 @@ package org.quanyu.ai.chat.client;
 import com.alibaba.fastjson.JSONObject;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.quanyu.ai.chat.CacheStrategy;
-import org.quanyu.ai.chat.DefaultCacheStrategy;
 import org.quanyu.ai.chat.model.Config;
 import org.quanyu.ai.chat.model.response.ModelResponse;
 import org.quanyu.ai.chat.model.response.QyAIResponse;
-import org.quanyu.ai.chat.model.request.Message;
 import org.quanyu.ai.chat.model.request.RequestBody;
 import org.quanyu.ai.chat.model.response.ToolCall;
 import org.quanyu.ai.mcp.client.QyMcpClient;
@@ -17,9 +15,11 @@ import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @description: 抽象的对话客户端
@@ -38,29 +38,37 @@ public abstract class ChatClient {
     public abstract Flux<QyAIResponse> chatFlux(CacheStrategy cacheStrategy, String sessionId, String userInput);
 
     public QyAIResponse chat(String sessionId, String userInput){
-        return chat(new DefaultCacheStrategy(), sessionId, userInput);
+        return chat(null, sessionId, userInput);
     }
 
     public Flux<QyAIResponse> chatFlux(String sessionId, String userInput){
-        return chatFlux(new DefaultCacheStrategy(), sessionId, userInput);
+        return chatFlux(null, sessionId, userInput);
     }
 
     protected <T extends ModelResponse> QyAIResponse chat(Class<T> clz, CacheStrategy cacheStrategy, String sessionId, String userInput) {
         WebClient webClient = this.buildWebClient();
         RequestBody requestBody = this.buildRequestBody(false, cacheStrategy, sessionId, userInput);
+        List<Object> messages = requestBody.getMessages();
+
         T modelResponse = chatModel(clz, webClient, requestBody);
         List<ToolCall> toolCalls = modelResponse.toolCalls();
-        if(toolCalls!=null && !toolCalls.isEmpty()){
+        while(toolCalls!=null && !toolCalls.isEmpty()){
             ToolCall toolCall = toolCalls.get(0);
-            requestBody.addMessage(modelResponse.messages());
+            messages.add(modelResponse.messages());
             String toolContent = qyMcpClient.callTool(toolCall.getFunction().getName(), toolCall.getFunction().getArgumentsMap());
             JSONObject message = new JSONObject();
             message.put("role","tool");
             message.put("content", toolContent);
             message.put("tool_call_id", toolCall.getId());
-            requestBody.addMessage(message);
+            messages.add(message);
             modelResponse = chatModel(clz, webClient, requestBody);
+            messages.add(modelResponse.messages());
+
+            toolCalls = modelResponse.toolCalls();
         }
+        messages.add(modelResponse.messages());
+        this.cacheMessage(cacheStrategy, sessionId, messages);
+
         return modelResponse.toQyAIResponse();
     }
 
@@ -80,20 +88,56 @@ public abstract class ChatClient {
     protected <T extends ModelResponse> Flux<QyAIResponse> chatFlux(Class<T> clz, CacheStrategy cacheStrategy, String sessionId, String userInput){
         WebClient webClient = this.buildWebClient();
         RequestBody requestBody = this.buildRequestBody(true, cacheStrategy, sessionId, userInput);
+        return chatFlux(clz, webClient, requestBody);
+    }
+
+
+    protected Flux<QyAIResponse> chatFlux(Class<? extends ModelResponse> clz,
+                                               WebClient webClient,
+                                               RequestBody requestBody) {
+        AtomicReference<ModelResponse> atomicMr = new AtomicReference<>();
+
         return webClient.post()
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToFlux(String.class)
-                .map(str -> {
-                    if (!"[DONE]".equals(str)) {
-                        T responseBody = JSONObject.parseObject(str, clz);
-                        return responseBody.toQyAIResponse();
+                .concatMap(str -> {
+                    if ("[DONE]".equals(str)) {
+                        return Flux.just(QyAIResponse.getEMPTY());
                     }
-                    return QyAIResponse.getEMPTY();
-                });
+                    ModelResponse newMr = JSONObject.parseObject(str, clz);
+
+                    ModelResponse mr = atomicMr.get();
+                    if(mr==null){
+                        mr = newMr;
+                    }else {
+                        mr.fluxAppend(newMr);
+                    }
+                    atomicMr.set(mr);
+
+                    return Flux.just(newMr.toQyAIResponse());
+                })
+                .concatWith(
+                        Flux.defer(() -> {
+                            ModelResponse mr = atomicMr.get();
+                            ToolCall toolCall;
+                            if (mr.toolCalls() !=null && !mr.toolCalls().isEmpty() && (toolCall = mr.toolCalls().get(0)) != null) {
+                                //处理工具调用
+                                String toolContent = qyMcpClient.callTool(toolCall.getFunction().getName(), toolCall.getFunction().getArgumentsMap());
+                                JSONObject message = new JSONObject();
+                                message.put("role","tool");
+                                message.put("content", toolContent);
+                                message.put("tool_call_id", toolCall.getId());
+                                requestBody
+                                        .addMessage(mr.messages())
+                                        .addMessage(message);
+                                return chatFlux(clz, webClient, requestBody);
+                            } else {
+                                return Flux.empty();
+                            }
+                        })
+                );
     }
-
-
 
     /**
      * @description: 创建webclient客户端
@@ -121,8 +165,10 @@ public abstract class ChatClient {
         RequestBody requestBody = new RequestBody()
                 .withModel(config.getModel())
                 .withStream(stream);
-
-        List<Object> messageList = cacheStrategy.get(sessionId);
+        List<Object> messageList = new ArrayList<>();
+        if(cacheStrategy!=null){
+            messageList = cacheStrategy.get(sessionId);
+        }
         JSONObject message = new JSONObject();
         message.put("role","user");
         message.put("content", userInput);
@@ -136,4 +182,9 @@ public abstract class ChatClient {
         return requestBody;
     }
 
+    protected void cacheMessage(CacheStrategy cacheStrategy, String sessionId, List<Object> messageList){
+        if(cacheStrategy!=null){
+            cacheStrategy.set(sessionId, messageList);
+        }
+    }
 }

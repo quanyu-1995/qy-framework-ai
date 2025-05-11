@@ -12,5 +12,5 @@ public class Choice {
     private int index;
     private Message message;
     private String finish_reason;
-    private Delta delta;
+    private Message delta;
 }

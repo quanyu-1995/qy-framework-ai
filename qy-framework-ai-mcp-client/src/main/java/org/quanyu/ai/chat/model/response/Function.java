@@ -13,8 +13,8 @@ import java.util.Map;
  */
 @Data
 public class Function {
-    public String name;
-    public Object arguments;
+    private String name;
+    private Object arguments;
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> getArgumentsMap(){
@@ -28,6 +28,19 @@ public class Function {
                 return new HashMap<>();
             }
             return JSONObject.parseObject(jsonString);
+        }
+    }
+
+    public void fluxAppend(Function other){
+        if(other.name != null){
+            this.name = other.name;
+        }
+        if(arguments instanceof Map){
+            // TODO
+        } else if(arguments instanceof  String){
+            this.arguments += other.arguments == null ? "" :  (String)other.arguments;
+        } else {
+            // TODO
         }
     }
 }

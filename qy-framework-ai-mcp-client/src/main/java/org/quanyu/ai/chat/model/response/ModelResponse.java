@@ -13,5 +13,9 @@ public abstract class ModelResponse {
 
     public abstract List<ToolCall> toolCalls();
 
-    public abstract Object messages();
+    public abstract Message messages();
+
+    public abstract String finishReason();
+
+    public abstract void fluxAppend(ModelResponse other);
 }

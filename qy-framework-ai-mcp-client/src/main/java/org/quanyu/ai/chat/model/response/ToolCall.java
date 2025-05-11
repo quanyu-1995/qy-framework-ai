@@ -12,4 +12,15 @@ public class ToolCall {
     private String type;
     private String id;
     private Function function;
+
+    public void fluxAppend(ToolCall other) {
+        if(other.type!=null){
+            this.type += other.type;
+        }
+        if(other.id!=null){
+            this.id += other.id;
+        }
+        this.function.fluxAppend(other.function);
+    }
+
 }

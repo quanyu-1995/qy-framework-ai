@@ -21,32 +21,46 @@ public class OpenAIResponseBody extends ModelResponse {
     private List<Choice> choices;
     private Usage usage;
     private String system_fingerprint;
+    private String finish_reason;
 
     @Override
     public QyAIResponse toQyAIResponse() {
         QyAIResponse qyAIResponse = new QyAIResponse();
 
-        Delta delta = this.getChoices().get(this.getChoices().size() - 1).getDelta();
-        if(delta==null){
-            Message message = this.getChoices().get(this.getChoices().size() - 1).getMessage();
+        Message message = this.getChoices().get(this.getChoices().size() - 1).getDelta();
+        if(message==null){
+            message = this.getChoices().get(this.getChoices().size() - 1).getMessage();
             qyAIResponse.setContent(message.getContent());
             qyAIResponse.setReasoningContent(message.getReasoning_content());
             qyAIResponse.setTotalTokens(this.getUsage().getTotal_tokens());
         }else{
-            qyAIResponse.setContent(delta.getContent());
-            qyAIResponse.setReasoningContent(delta.getReasoning_content());
+            qyAIResponse.setContent(message.getContent());
+            qyAIResponse.setReasoningContent(message.getReasoning_content());
         }
         return qyAIResponse;
     }
 
     @Override
     public List<ToolCall> toolCalls() {
-        return this.getChoices().get(0).getMessage().getTool_calls();
+        Message message = this.getChoices().get(0).getMessage()==null ?
+                this.getChoices().get(0).getDelta() : this.getChoices().get(0).getMessage();
+        return message.getTool_calls();
     }
 
     @Override
-    public Object messages() {
-        return this.getChoices().get(0).getMessage();
+    public Message messages() {
+        return this.getChoices().get(0).getMessage()==null ?
+                this.getChoices().get(0).getDelta() : this.getChoices().get(0).getMessage();
     }
 
+    @Override
+    public String finishReason() {
+        return this.finish_reason;
+    }
+
+    @Override
+    public void fluxAppend(ModelResponse other) {
+        Message messages = this.messages();
+        messages.fluxAppend(other.messages());
+    }
 }

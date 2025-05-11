@@ -3,6 +3,7 @@ package org.quanyu.ai.chat.model.response;
 
 import lombok.Data;
 import lombok.Getter;
+import org.quanyu.ai.chat.model.request.Tool;
 
 /**
  * @author quanyu

@@ -3,7 +3,6 @@ package org.quanyu.ai.chat;
 
 import com.alibaba.fastjson.JSON;
 import org.quanyu.ai.SpringBeanContext;
-import org.quanyu.ai.chat.model.request.Message;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.ArrayList;
@@ -31,6 +30,9 @@ public class DefaultCacheStrategy implements CacheStrategy{
 
     @Override
     public void set(String sessionId, List<Object> messageList) {
+        if (sessionId==null || sessionId.isBlank()){
+            return;
+        }
         redisTemplate.opsForValue().set(
                 sessionId,
                 JSON.toJSONString(messageList)

@@ -32,7 +32,19 @@ public class OllamaResponseBody extends ModelResponse {
     }
 
     @Override
-    public Object messages() {
+    public Message messages() {
         return this.getMessage();
+    }
+
+    @Override
+    public String finishReason() {
+        return "";
+    }
+
+    @Override
+    public void fluxAppend(ModelResponse other) {
+        OllamaResponseBody orb = (OllamaResponseBody)other;
+        this.model += orb.getModel();
+        this.message.fluxAppend(((OllamaResponseBody) other).getMessage());
     }
 }
