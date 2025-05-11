@@ -88,15 +88,20 @@ public abstract class ChatClient {
     protected <T extends ModelResponse> Flux<QyAIResponse> chatFlux(Class<T> clz, CacheStrategy cacheStrategy, String sessionId, String userInput){
         WebClient webClient = this.buildWebClient();
         RequestBody requestBody = this.buildRequestBody(true, cacheStrategy, sessionId, userInput);
-        return chatFlux(clz, webClient, requestBody);
+        return chatFlux(clz, webClient, requestBody)
+                .doOnComplete(() -> {
+                    List<Object> messages = requestBody.getMessages();
+                    this.cacheMessage(cacheStrategy, sessionId, messages);
+                });
     }
 
 
     protected Flux<QyAIResponse> chatFlux(Class<? extends ModelResponse> clz,
                                                WebClient webClient,
                                                RequestBody requestBody) {
-        AtomicReference<ModelResponse> atomicMr = new AtomicReference<>();
 
+        AtomicReference<ModelResponse> atomicMr = new AtomicReference<>();
+        //处理工具调用
         return webClient.post()
                 .bodyValue(requestBody)
                 .retrieve()
@@ -133,6 +138,7 @@ public abstract class ChatClient {
                                         .addMessage(message);
                                 return chatFlux(clz, webClient, requestBody);
                             } else {
+                                requestBody.addMessage(mr.messages());
                                 return Flux.empty();
                             }
                         })

@@ -1,6 +1,7 @@
 package org.quanyu.test;
 
 
+import org.quanyu.ai.chat.DefaultCacheStrategy;
 import org.quanyu.ai.chat.client.ChatClient;
 import org.quanyu.ai.chat.model.response.QyAIResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +23,12 @@ public class TestController {
 
     @GetMapping("chat")
     public QyAIResponse chat(@RequestParam(value = "sessionId", required = false) String sessionId, @RequestParam(value = "userInput") String userInput){
-        return chatClient.chat(sessionId, userInput);
+        return chatClient.chat(new DefaultCacheStrategy(), sessionId, userInput);
     }
 
     @GetMapping(value = "chatFlux", produces= MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<QyAIResponse> chatFlux(@RequestParam(value = "sessionId", required = false) String sessionId, @RequestParam(value = "userInput") String userInput){
-        return chatClient.chatFlux(sessionId, userInput);
+        return chatClient.chatFlux(new DefaultCacheStrategy(), sessionId, userInput);
     }
 
 }

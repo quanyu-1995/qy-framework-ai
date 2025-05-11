@@ -38,7 +38,9 @@ public class Function {
         if(arguments instanceof Map){
             // TODO
         } else if(arguments instanceof  String){
-            this.arguments += other.arguments == null ? "" :  (String)other.arguments;
+            if(other.arguments != null){
+                this.arguments += (String)other.arguments;
+            }
         } else {
             // TODO
         }

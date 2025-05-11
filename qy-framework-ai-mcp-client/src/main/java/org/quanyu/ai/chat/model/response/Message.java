@@ -3,7 +3,6 @@ package org.quanyu.ai.chat.model.response;
 
 import lombok.Data;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,13 +18,13 @@ public class Message {
 
     public void fluxAppend(Message other){
         if(other.role!=null){
-            this.role += other.role;
+            this.role = (this.role==null?"":this.role) + other.role;
         }
         if(other.content!=null){
-            this.content += other.content;
+            this.content = (this.content==null?"":this.content) + other.content;
         }
         if(other.reasoning_content!=null){
-            this.reasoning_content += other.reasoning_content;
+            this.reasoning_content = (this.reasoning_content==null?"":this.reasoning_content) + other.reasoning_content;
         }
         if(other.role!=null){
             this.role = other.role;

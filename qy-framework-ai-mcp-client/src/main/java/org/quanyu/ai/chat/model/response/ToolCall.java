@@ -15,10 +15,10 @@ public class ToolCall {
 
     public void fluxAppend(ToolCall other) {
         if(other.type!=null){
-            this.type += other.type;
+            this.type = (this.type==null?"":this.type) + other.type;
         }
         if(other.id!=null){
-            this.id += other.id;
+            this.id = (this.id==null?"":this.id) + other.id;
         }
         this.function.fluxAppend(other.function);
     }
