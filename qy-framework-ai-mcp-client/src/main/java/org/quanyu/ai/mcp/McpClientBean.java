@@ -9,6 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Configuration
 public class McpClientBean {
 
@@ -16,10 +19,18 @@ public class McpClientBean {
     private McpClientConfig mcpClientConfig;
 
     @Bean
-    WebFluxSseClientTransport webFluxSseServerTransportProvider(ObjectProvider<WebClient.Builder> webClientBuilderProvider) {
-        WebClient.Builder webClientBuilderTemplate = webClientBuilderProvider
-                .getIfAvailable(WebClient::builder)
-                .baseUrl(mcpClientConfig.getBaseUrl());
-        return new WebFluxSseClientTransport(webClientBuilderTemplate, new ObjectMapper());
+    Map<String, WebFluxSseClientTransport> webFluxSseClientTransports(ObjectProvider<WebClient.Builder> webClientBuilderProvider) {
+        Map<String, WebFluxSseClientTransport> transports = new HashMap<>();
+
+        // 添加其他配置的 transport
+        mcpClientConfig.getServers().forEach((key, url) -> {
+            WebClient.Builder webClientBuilderTemplate = webClientBuilderProvider
+                    .getIfAvailable(WebClient::builder)
+                    .baseUrl(url);
+
+            transports.put(key, new WebFluxSseClientTransport(webClientBuilderTemplate, new ObjectMapper()));
+        });
+        
+        return transports;
     }
 }

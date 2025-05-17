@@ -1,12 +1,11 @@
 package org.quanyu.ai.chat.client;
 
 import com.alibaba.fastjson.JSONObject;
-import io.modelcontextprotocol.spec.McpSchema;
 import org.quanyu.ai.chat.CacheStrategy;
 import org.quanyu.ai.chat.model.Config;
+import org.quanyu.ai.chat.model.request.RequestBody;
 import org.quanyu.ai.chat.model.response.ModelResponse;
 import org.quanyu.ai.chat.model.response.QyAIResponse;
-import org.quanyu.ai.chat.model.request.RequestBody;
 import org.quanyu.ai.chat.model.response.ToolCall;
 import org.quanyu.ai.mcp.client.QyMcpClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -181,10 +180,7 @@ public abstract class ChatClient {
         messageList.add(message);
         requestBody.setMessages(messageList);
 
-        List<McpSchema.Tool> tools = qyMcpClient.listTools().tools();
-        if(tools!=null && !tools.isEmpty()){
-            tools.forEach(requestBody::addTool);
-        }
+        qyMcpClient.listTools().forEach(requestBody::addTool);
         return requestBody;
     }
 

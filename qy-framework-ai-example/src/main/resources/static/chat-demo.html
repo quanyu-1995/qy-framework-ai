@@ -44,7 +44,8 @@
             }
 
             // 初始化SSE连接
-            eventSource = new EventSource(`http://localhost:8080/chatFlux?userInput=${encodeURIComponent(userInput)}&sessionId=1`);
+            // eventSource = new EventSource(`http://localhost:8080/chatFlux?userInput=${encodeURIComponent(userInput)}&sessionId=1`);
+            eventSource = new EventSource(`http://localhost:8080/chatFlux?userInput=${encodeURIComponent(userInput)}`);
 
             eventSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
