@@ -6,7 +6,28 @@
 - qy-framework-ai-example: 对话示例（含MCP Client示例）
 - qy-framework-ai-mcp-server-example: MCP Server示例
 ## 配置说明
-### qy-framework-ai-client
+### 客户端
+pom文件引入
+```xml
+<dependencies>
+    <dependency>
+        <groupId>io.github.quanyu-1995</groupId>
+        <artifactId>qy-framework-ai-mcp-client</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+
+<repositories>
+    <repository>
+        <id>sonatype-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+```
+applicaiton.yaml配置文件参考如下：
 ```yaml
 # 端口配置
 server:
@@ -30,8 +51,8 @@ quanyu:
       #      model: qwen3:8b
     mcp:
       client:
-        # mcp服务端url
-        base-url: http://localhost:8090
+        servers:
+          server1: http://localhost:8090
 # 默认缓存策略所需配置（DefaultCacheStrategy）
 spring:
   data:
@@ -64,7 +85,28 @@ spring:
           max-wait: -1ms
 ```
 
-### qy-framework-ai-server
+### 服务端
+pom文件引入
+```xml
+<dependencies>
+    <dependency>
+        <groupId>io.github.quanyu-1995</groupId>
+        <artifactId>qy-framework-ai-mcp-server</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+
+<repositories>
+    <repository>
+        <id>sonatype-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+```
+applicaiton.yaml配置文件参考如下：
 ```yaml
 # 端口配置
 server:

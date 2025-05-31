@@ -4,22 +4,49 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.quanyu</groupId>
+    <groupId>io.github.quanyu-1995</groupId>
     <artifactId>qy-framework-ai</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+
     <modules>
         <module>qy-framework-ai-mcp-server</module>
         <module>qy-framework-ai-mcp-client</module>
-        <module>qy-framework-ai-example</module>
-        <module>qy-framework-ai-mcp-server-example</module>
     </modules>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/quanyu-1995/qy-framework-ai.git</url>
+        <connection>scm:git:https://github.com/quanyu-1995/qy-framework-ai.git</connection>
+        <developerConnection>scm:https://github.com/quanyu-1995/qy-framework-ai.git</developerConnection>
+    </scm>
+
+    <url>https://github.com/quanyu-1995/qy-framework-ai</url>
+
+    <description>
+        qy-framework-ai
+    </description>
+
+    <developers>
+        <developer>
+            <name>quanyu</name>
+            <email>18676751031</email>
+            <url>https://github.com/quanyu-1995</url>
+        </developer>
+    </developers>
 
     <properties>
         <!-- Project revision -->
         <revision>1.0.0</revision>
 
         <java.version>17</java.version>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
 
@@ -62,4 +89,64 @@
             <version>1.2.47</version>
         </dependency>
     </dependencies>
+
+    <!-- 配置必须的插件 -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
+                <configuration>
+                    <doclint>none</doclint>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.7.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>quanyu</publishingServerId>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <name>Central Portal Snapshots</name>
+            <id>central-portal-snapshots</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>
